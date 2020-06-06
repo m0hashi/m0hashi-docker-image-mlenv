@@ -13,4 +13,3 @@ awscli
 plotly
 catboost
 pandas-profiling
-pyarrow
