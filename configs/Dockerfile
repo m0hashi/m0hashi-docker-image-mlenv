@@ -3,7 +3,7 @@
 #================================================================================
 #FROM pytorch/pytorch:1.4-cuda10.1-cudnn7-devel as pytorch-base
 #FROM ubuntu:20.04 as anaconda-base
-FROM tensorflow/tensorflow:2.1.0-gpu as anaconda-base
+FROM tensorflow/tensorflow:2.2.0-gpu as anaconda-base
 SHELL ["/bin/bash", "-c"]
 
 #eNV TZ Asia/Tokyo
