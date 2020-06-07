@@ -13,3 +13,4 @@ awscli
 plotly
 catboost
 pandas-profiling
+tensorflow_datasets
