@@ -26,14 +26,17 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
     apt-get clean
 
 
+
 ARG UNAME
 ARG GID
 ARG UID 
 ARG UPASSWD
 
+RUN groupadd  ${UNAME} -g ${GID}
+RUN chgrp -R ${UNAME} /opt/ && \
+    chmod 770 -R /opt/
 #Add user
 RUN echo ${UNAME} ${GID} && \
-    groupadd  ${UNAME} -g ${GID} && \
     useradd -u ${UID} -g ${UNAME} -m ${UNAME} --create-home --shel /bin/bash && \
     usermod -aG sudo ${UNAME} && \
     echo "Set disable_coredump false" >> /etc/sudo.conf && \
@@ -42,48 +45,57 @@ USER ${UNAME}
 WORKDIR /home/${UNAME}
 
 #Install Anaconda
-ENV PATH ~/.conda/bin:$PATH
+ENV PATH /opt/conda/bin:$PATH
 RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh -O ~/anaconda.sh && \
-    bash ~/anaconda.sh -b -p ~/.conda && \
+    bash ~/anaconda.sh -b -p  /opt/conda && \
     rm ~/anaconda.sh && \
-    echo "PATH=~/.conda/bin/:$PATH" >> ~/.bashrc && \
-    echo ". ~/.conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "PATH=/opt/conda/bin/:$PATH" >> ~/.bashrc && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     echo "conda activate base" >> ~/.bashrc && \
-    find ~/.conda/ -follow -type f -name '*.a' -delete && \
-    find ~/.conda/ -follow -type f -name '*.js.map' -delete && \
-    ~/.conda/bin/conda clean -afy
+    find /opt/conda/ -follow -type f -name '*.a' -delete && \
+    find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
+    /opt/conda/bin/conda clean -afy
 
-
-
+RUN echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64' >> ~/.bashrc
 #================================================================================
 # Make conda jupyterlab environment
 #================================================================================
 FROM anaconda-base as dlenv-base
 
+USER root 
+WORKDIR ~/
+
 ARG UNAME
 #install jupyter lab extensions
 #for  details, see -> https://qiita.com/canonrock16/items/d166c93087a4aafd2db4
+RUN conda update conda
 RUN source ~/.bashrc && conda install -c conda-forge jupyterlab
 
-RUN mkdir /home/${UNAME}/.tmp
-COPY ./files/jupyterlab-extensions.txt /home/${UNAME}/.tmp/
-RUN cat /home/${UNAME}/.tmp/jupyterlab-extensions.txt | tr '\n' ' ' >/home/${UNAME}/.tmp/tmplist && \
-   jupyter labextension install `cat /home/${UNAME}/.tmp/tmplist`
+COPY ./files/jupyterlab-extensions.txt .tmp/
+RUN cat .tmp/jupyterlab-extensions.txt | tr '\n' ' ' > .tmp/tmplist && \
+   jupyter labextension install `cat .tmp/tmplist`
 
-#install ML library                                                     
-COPY ./files/conda-requirements.txt ./files/pip-requirements.txt ./files/anaconda-requirements.txt ./files/conda-pytorch.txt \
-    /home/${UNAME}/.tmp/
-RUN conda install -c conda-forge --file /home/${UNAME}/.tmp/conda-requirements.txt && \
-    conda install -c Anaconda --file /home/${UNAME}/.tmp/anaconda-requirements.txt && \
-    conda clean --all && \
-    pip install --no-cache-dir -r /home/${UNAME}/.tmp/pip-requirements.txt
+#install ML library
+COPY ./files/conda-requirements.txt ./files/pip-requirements.txt ./files/anaconda-requirements.txt ./files/conda-pytorch.txt .tmp/
+#RUN conda install -c pytorch --file .tmp/conda-pytorch.txt
+RUN pip install torch==1.5.0+cu101 torchvision==0.6.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip install --no-cache-dir -r .tmp/pip-requirements.txt
+RUN conda install -c conda-forge --file .tmp/conda-requirements.txt && \
+    conda install -c Anaconda --file .tmp/anaconda-requirements.txt && \
+    conda clean --all 
 
 #================================================================================
 # Set startup configurations
 #================================================================================
-FROM dlenv-base
+FROM dlenv-base as setup
 
 ARG UNAME
+ARG GID
+ARG UID 
+ARG UPASSWD
+
+USER ${UNAME}
+WORKDIR /home/${UNAME}
 
 RUN mkdir ~/.local && \
     mkdir ~/workspace && \
@@ -91,12 +103,17 @@ RUN mkdir ~/.local && \
     mkdir ~/.kaggle && \
     mkdir ~/.aws
 
-
-
-
 COPY ./files/docker-entrypoint.sh /home/${UNAME}/.local/bin/docker-entrypoint.sh
 
 USER root
+WORKDIR ~/
+RUN echo "PATH=/opt/conda/bin/:$PATH" >> ~/.bashrc && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate base" >> ~/.bashrc 
+RUN echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64' >> ~/.bashrc
+
 RUN chown ${UNAME}:${UNAME} /home/${UNAME}/.local/bin/docker-entrypoint.sh && \
     mkdir /var/run/sshd
 
+FROM setup
+CMD /bin/bash
