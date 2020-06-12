@@ -10,3 +10,4 @@ echo "SSHPORT=11111" >> .env
 mkdir workspace
 mkdir ~/.kaggle
 mkdir ~/.awS
+cp ~/.gitconfig ./configs/files

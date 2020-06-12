@@ -104,6 +104,7 @@ RUN mkdir ~/.local && \
     mkdir ~/.aws
 
 COPY ./files/docker-entrypoint.sh /home/${UNAME}/.local/bin/docker-entrypoint.sh
+COPY ./files/.gitconfig /home/${UNAME}/
 
 USER root
 WORKDIR ~/
@@ -112,7 +113,7 @@ RUN echo "PATH=/opt/conda/bin/:$PATH" >> ~/.bashrc && \
     echo "conda activate base" >> ~/.bashrc 
 RUN echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64' >> ~/.bashrc
 
-RUN chown ${UNAME}:${UNAME} /home/${UNAME}/.local/bin/docker-entrypoint.sh && \
+RUN chown ${UNAME}:${UNAME} /home/${UNAME}/.gitconfig /home/${UNAME}/.local/bin/docker-entrypoint.sh && \
     mkdir /var/run/sshd
 
 FROM setup
