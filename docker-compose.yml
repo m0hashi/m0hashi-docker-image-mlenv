@@ -1,7 +1,7 @@
 version: '2.4'
 
 services:
-  dl-env:
+  ml-env:
     env_file: .env
     build:
       context: ./configs
@@ -12,8 +12,7 @@ services:
         GID: ${GID}
         UPASSWD: ${UPASSWD}
         SSHPORT: ${SSHPORT}
-    runtime: nvidia
-    privileged: true
+    container_name: ml-env
     ports:
       - "${NBPORT}:8888"
       - "${SSHPORT}:22"
