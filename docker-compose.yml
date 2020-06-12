@@ -13,11 +13,7 @@ services:
         UPASSWD: ${UPASSWD}
         SSHPORT: ${SSHPORT}
     runtime: nvidia
-    container_name: dl-env
     privileged: true
-    environment: 
-    - NVIDIA_VISIBLE_DEVICES=all
-    - NVIDIA_DRIVER_CAPABILITIES=all
     ports:
       - "${NBPORT}:8888"
       - "${SSHPORT}:22"
