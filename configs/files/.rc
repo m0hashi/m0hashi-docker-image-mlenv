@@ -1,7 +1,30 @@
-export CH=$(dirname -- $(readlink -fn -- "$0"))
+#!/bin/bash
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do 
+	DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+	SOURCE="$(readlink "$SOURCE")"
+	[[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+done
+CH="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+export CH
+echo "competition home was set to 
+$CH"
+
+#export CH=$(dirname -- $(readlink -fn -- "$0"))
 
 alias datlink='ln -s `realpath --relative-to=. $CH/data ` .'
+alias inplink='ln -s `realpath --relative-to=. $CH/data/input ` .'
 alias srclink='ln -s `realpath --relative-to=. $CH/src ` .'
 
-alias setlink="datlink & srclink"
-                                   
+alias setlink="datlink && srclink && inplink"
+mk () {
+  dirname=$1
+  mkdir -p $dirname 
+  cd $dirname
+  datlink
+  inplink
+  srclink
+  cd - 
+}
+export mk

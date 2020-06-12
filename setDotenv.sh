@@ -9,5 +9,5 @@ echo "NBPORT=8879" >> .env
 echo "SSHPORT=11111" >> .env
 mkdir workspace
 mkdir ~/.kaggle
-mkdir ~/.awS
+mkdir ~/.aws
 cp ~/.gitconfig ./configs/files
