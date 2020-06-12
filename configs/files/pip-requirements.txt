@@ -12,7 +12,7 @@ boto3
 awscli
 plotly
 catboost
-pandas-profiling
+#pandas-profiling
 tensorflow_datasets
 pydot
-
+pyarrow

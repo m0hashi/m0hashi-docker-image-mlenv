@@ -22,7 +22,7 @@ services:
       - "${NBPORT}:8888"
       - "${SSHPORT}:22"
     volumes:
-      - ./workspace:/home/${UNAME}/workspace
+      - ~/workspace:/home/${UNAME}/workspace
       - /home/${USER}/.ssh:/home/${UNAME}/.ssh
       - /home/${USER}/.kaggle:/home/${UNAME}/.kaggle
     user: "${UID}:${GID}"

@@ -2,4 +2,4 @@ lightgbm
 xgboost
 featuretools
 hdbscan
-pyarrow
+matplotlib

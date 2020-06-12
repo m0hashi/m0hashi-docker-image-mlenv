@@ -25,8 +25,6 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean
 
-
-
 ARG UNAME
 ARG GID
 ARG UID 
@@ -62,27 +60,26 @@ RUN echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/l
 #================================================================================
 FROM anaconda-base as dlenv-base
 
-USER root 
-WORKDIR ~/
 
 ARG UNAME
 #install jupyter lab extensions
 #for  details, see -> https://qiita.com/canonrock16/items/d166c93087a4aafd2db4
 RUN conda update conda
-RUN source ~/.bashrc && conda install -c conda-forge jupyterlab
+#RUN source ~/.bashrc && conda install -c conda-forge jupyterlab
+RUN pip install --no-cache-dir jupyterlab==2.1.4
 
-COPY ./files/jupyterlab-extensions.txt .tmp/
+COPY --chown=${UNAME}:${UNAME} ./files/jupyterlab-extensions.txt .tmp/
 RUN cat .tmp/jupyterlab-extensions.txt | tr '\n' ' ' > .tmp/tmplist && \
    jupyter labextension install `cat .tmp/tmplist`
 
 #install ML library
-COPY ./files/conda-requirements.txt ./files/pip-requirements.txt ./files/anaconda-requirements.txt ./files/conda-pytorch.txt .tmp/
+COPY --chown=${UNAME}:${UNAME} ./files/conda-requirements.txt ./files/pip-requirements.txt ./files/anaconda-requirements.txt ./files/conda-pytorch.txt .tmp/
 #RUN conda install -c pytorch --file .tmp/conda-pytorch.txt
-RUN pip install torch==1.5.0+cu101 torchvision==0.6.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
-RUN pip install --no-cache-dir -r .tmp/pip-requirements.txt
+RUN pip install --no-cache-dir torch==1.5.0+cu101 torchvision==0.6.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 RUN conda install -c conda-forge --file .tmp/conda-requirements.txt && \
     conda install -c Anaconda --file .tmp/anaconda-requirements.txt && \
     conda clean --all 
+RUN pip install --no-cache-dir -r .tmp/pip-requirements.txt
 
 #================================================================================
 # Set startup configurations
@@ -103,18 +100,18 @@ RUN mkdir ~/.local && \
     mkdir ~/.kaggle && \
     mkdir ~/.aws
 
-COPY ./files/docker-entrypoint.sh /home/${UNAME}/.local/bin/docker-entrypoint.sh
-COPY ./files/.gitconfig /home/${UNAME}/
+COPY --chown=${UNAME}:${UNAME} ./files/docker-entrypoint.sh /home/${UNAME}/.local/bin/docker-entrypoint.sh
+COPY --chown=${UNAME}:${UNAME} ./files/.gitconfig /home/${UNAME}/
 
 USER root
-WORKDIR ~/
-RUN echo "PATH=/opt/conda/bin/:$PATH" >> ~/.bashrc && \
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    echo "conda activate base" >> ~/.bashrc 
-RUN echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64' >> ~/.bashrc
+RUN echo "PATH=/opt/conda/bin/:$PATH" >> /root/.bashrc && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> /root/.bashrc && \
+    echo "conda activate base" >> /root/bashrc 
+RUN echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64' >> /root/.bashrc
 
 RUN chown ${UNAME}:${UNAME} /home/${UNAME}/.gitconfig /home/${UNAME}/.local/bin/docker-entrypoint.sh && \
     mkdir /var/run/sshd
+
 
 FROM setup
 CMD /bin/bash

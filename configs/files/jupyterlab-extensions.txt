@@ -1,5 +1,5 @@
 @lckr/jupyterlab_variableinspector
 @jupyterlab/toc
-jupyterlab_vim
+@axlair/jupyterlab_vim
 @jupyter-widgets/jupyterlab-manager
 @jupyterlab/debugger
